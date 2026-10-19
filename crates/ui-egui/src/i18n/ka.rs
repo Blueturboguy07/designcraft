@@ -586,6 +586,10 @@ pub(super) const TABLE: &[(&str, &str)] = &[
     ("Frame Fitting Options…", "ჩარჩოს ზომაზე მორგების პარამეტრები…"),
     ("Generate Index…", "ინდექსის შექმნა…"),
     ("Generate QR Code…", "QR კოდის შექმნა…"),
+    // Object › AI (desktop).
+    ("AI", "ხელოვნური ინტელექტი"),
+    ("Draft Copy…", "ტექსტის მონახაზი…"),
+    ("Generate Image…", "გამოსახულების შექმნა…"),
     ("Generate Static Caption", "სტატიკური წარწერის შექმნა"),
     ("Get Story", "ტექსტური ნაკადის მიღება"),
     ("Get Table", "ცხრილის მიღება"),

@@ -139,6 +139,19 @@ fn no_prefs() -> bool {
     std::env::var_os("DESIGNCRAFT_NO_PREFS").is_some()
 }
 
+/// What publik needs to know about this build. The app token is public by design (it can only
+/// mint capped keys attributed to DesignCraft) and lives at the repo root so source builds carry it.
+fn app_info() -> designcraft_ui_egui::ai::AppInfo {
+    designcraft_ui_egui::ai::AppInfo {
+        slug: "designcraft",
+        name: "DesignCraft",
+        version: env!("CARGO_PKG_VERSION"),
+        app_token: include_str!("../../../publik-app-token.txt"),
+        dialects: &["chat_completions", "images"],
+        config_dir: profile::config_dir(),
+    }
+}
+
 fn prefs_path() -> Option<std::path::PathBuf> {
     profile::config_dir().map(|b| b.join("ui.json"))
 }
@@ -366,6 +379,12 @@ fn main() -> std::process::ExitCode {
             },
         }
     }
+    // Builder check (publikhq.com/skills/setup.md): the built app provisions publik API for real
+    // and prints one line. The builder who runs it is the consent.
+    if std::env::var_os("PUBLIK_SELF_TEST").is_some() {
+        println!("{}", designcraft_ui_egui::ai::self_test(&app_info()));
+        return std::process::ExitCode::SUCCESS;
+    }
     // A portable.txt whose DesignCraftData folder cannot be written: the platform folders are used
     // instead (see `profile`), and the user is told, in the log and in the status bar.
     let portable_note = profile::unwritable_portable_dir().map(|dir| {
@@ -504,6 +523,11 @@ fn main() -> std::process::ExitCode {
                     app.status(format!("Recovered {n} unsaved document{} from the last session.", if n == 1 { "" } else { "s" }));
                 }
                 load_prefs(&mut app);
+                // AI through publik API or the person's own key; the first launch asks once. Not
+                // in runs without preferences (tests, demos), where no dialog may appear unasked.
+                if !no_prefs() {
+                    app.ai = Some(designcraft_ui_egui::ai::Ai::new(app_info()));
+                }
                 // After `load_prefs`, which replaces the UI state and with it the status line.
                 if let Some(note) = portable_note {
                     app.status(note);

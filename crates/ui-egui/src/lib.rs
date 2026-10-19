@@ -7,6 +7,8 @@
 #![forbid(unsafe_code)]
 
 pub mod about;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod ai;
 pub mod canvas;
 pub mod chrome;
 pub mod control;
@@ -634,6 +636,10 @@ pub struct DesignApp {
     pub cursors: cursors::Images,
     /// A panel's live preview (a slider being dragged), committed when it is let go.
     live_preview: LivePreview,
+    /// AI through publik API or the person's own key (desktop only). `None` until the host
+    /// installs it, and in runs without preferences, where no setup dialog may appear unasked.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub ai: Option<ai::Ai>,
 }
 
 /// The preview a panel opened with `edit.preview`: it stays open while a panel holds it each frame.
@@ -703,6 +709,8 @@ impl DesignApp {
             quitting: None,
             cursors: cursors::Images::default(),
             live_preview: LivePreview::default(),
+            #[cfg(not(target_arch = "wasm32"))]
+            ai: None,
         }
     }
 
@@ -1499,6 +1507,9 @@ impl DesignApp {
             return;
         }
         self.settle_live_preview();
+        // AI requests that finished, and the first-launch AI dialog once the window is up.
+        #[cfg(not(target_arch = "wasm32"))]
+        ai::frame(self);
         let t0 = now_ms();
         let t = theme::Tokens::get(&ctx);
         let presenting = self.ui.screen_mode == ScreenMode::Presentation;

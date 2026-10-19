@@ -13,6 +13,17 @@ mod options;
 mod style_cjk;
 pub use options::{open_color_group_options, open_layer_options, open_swatch_options};
 
+/// The AI dialogs (desktop only, drawn by `crate::ai`): the first-launch setup and the two
+/// Object › AI tools. Their own buttons send; the footer only closes them, and OK from the
+/// control channel sends nothing.
+pub const AI_SETUP: &str = "aiSetup";
+pub const AI_DRAFT_COPY: &str = "aiDraftCopy";
+pub const AI_GENERATE_IMAGE: &str = "aiGenerateImage";
+
+pub(crate) fn is_ai(id: &str) -> bool {
+    matches!(id, AI_SETUP | AI_DRAFT_COPY | AI_GENERATE_IMAGE)
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct Dialog {
     pub id: String,
@@ -1564,10 +1575,10 @@ fn confirm_document_setup(app: &mut DesignApp, d: &Dialog) -> Result<Value, Stri
 
 /// Preferences: a section list and the section's options. Application options always; units and
 /// increments when a document is open (InDesign keeps those with the document).
-fn preferences(app: &crate::DesignApp, ui: &mut egui::Ui, d: &mut Dialog, max_height: f32) {
+fn preferences(app: &mut crate::DesignApp, ui: &mut egui::Ui, d: &mut Dialog, max_height: f32) {
     let has_doc = d.fields.contains_key("horizontalUnits");
-    let sections: &[(&str, &str)] = if has_doc {
-        &[
+    let mut sections: Vec<(&str, &str)> = if has_doc {
+        [
             ("general", "General"),
             ("interface", "Interface"),
             ("type", "Type"),
@@ -1586,8 +1597,9 @@ fn preferences(app: &crate::DesignApp, ui: &mut egui::Ui, d: &mut Dialog, max_he
             ("black", "Appearance of Black"),
             ("files", "File Handling"),
         ]
+        .to_vec()
     } else {
-        &[
+        [
             ("general", "General"),
             ("interface", "Interface"),
             ("type", "Type"),
@@ -1600,7 +1612,12 @@ fn preferences(app: &crate::DesignApp, ui: &mut egui::Ui, d: &mut Dialog, max_he
             ("display", "Display Performance"),
             ("files", "File Handling"),
         ]
+        .to_vec()
     };
+    // publik API or the person's own key for Object › AI (desktop only).
+    if cfg!(not(target_arch = "wasm32")) {
+        sections.push(("ai", "AI"));
+    }
     let cur = d.s("section");
     ui.horizontal_top(|ui| {
         // Bound both panes independently so selecting a lower section keeps its options visible.
@@ -1610,7 +1627,7 @@ fn preferences(app: &crate::DesignApp, ui: &mut egui::Ui, d: &mut Dialog, max_he
         ui.vertical(|ui| {
             ui.set_width(150.0);
             egui::ScrollArea::vertical().id_salt("preferences_sections").min_scrolled_height(1.0).max_height(height).show(ui, |ui| {
-                for (id, label) in sections {
+                for (id, label) in &sections {
                     if ui.selectable_label(cur == *id, crate::rtl::widget(ui, crate::i18n::tr(&app.ui.language, label))).clicked() {
                         d.fields.insert("section".into(), json!(id));
                     }
@@ -1678,6 +1695,11 @@ fn preferences(app: &crate::DesignApp, ui: &mut egui::Ui, d: &mut Dialog, max_he
                             d.fields.insert("storyEditorSize".into(), json!(v));
                         }
                     });
+                }
+                "ai" => {
+                    crate::rtl::label(ui, egui::RichText::new(crate::i18n::tr(&app.ui.language, "AI")).font(semibold(12.0)));
+                    #[cfg(not(target_arch = "wasm32"))]
+                    crate::ai::options_section(app, ui);
                 }
                 "files" => {
                     ui.label(crate::rtl::widget(
@@ -2087,6 +2109,9 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
         "colorGroupOptions" => crate::i18n::tr(&app.ui.language, "Color Group Options"),
         "layerSettings" => crate::i18n::tr(&app.ui.language, "Layer Options"),
         crate::effects_dialog::ID => crate::i18n::tr(&app.ui.language, "Effects"),
+        AI_SETUP => crate::i18n::tr(&app.ui.language, "AI"),
+        AI_DRAFT_COPY => crate::i18n::tr(&app.ui.language, "Draft Copy"),
+        AI_GENERATE_IMAGE => crate::i18n::tr(&app.ui.language, "Generate Image"),
         id => match id.strip_prefix("cmd:").and_then(designcraft_engine::find_command) {
             Some(c) => crate::i18n::tr(&app.ui.language, c.label.trim_end_matches('…')),
             None => crate::i18n::tr(&app.ui.language, "Dialog"),
@@ -2104,6 +2129,7 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
             "newDocument" => 960.0,
             "numberingSection" => 560.0,
             crate::effects_dialog::ID => 720.0,
+            id if is_ai(id) => 520.0,
             _ => 640.0,
         };
         let width = preferred_width.min(available.x);
@@ -2759,6 +2785,14 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
                     STEP_AND_REPEAT => step_and_repeat_dialog(app, ui, &mut d),
                     TOC => toc_dialog(app, ui, &mut d),
                     id if id.starts_with("cmd:") => command_form(app, ui, &mut d),
+                    id if is_ai(id) => {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        if crate::ai::dialog(app, ui, &mut d) {
+                            result = Some(false);
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        crate::rtl::label(ui, crate::i18n::tr(&app.ui.language, "AI tools are available in the desktop app."));
+                    }
                     "goToPage" => {
                         ui.horizontal(|ui| {
                             crate::rtl::label(ui, crate::i18n::tr(&app.ui.language, "Page"));
@@ -2824,21 +2858,25 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
         let cancel_label = match d.id.as_str() {
             "newDocument" => "Close",
             "findFont" => "Done",
+            id if is_ai(id) => "Close",
             _ => "Cancel",
         };
+        // The AI dialogs send only from their own buttons: no OK, and Enter adds a line.
+        let has_ok = !is_ai(&d.id);
         ui.horizontal(|ui| {
             if matches!(d.id.as_str(), "paragraphStyleOptions" | "characterStyleOptions") && !d.b("new") {
                 check(ui, &mut d, "preview", crate::i18n::tr(&app.ui.language, "Preview"));
                 style_options_preview(app, &mut d);
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui
-                    .add(
-                        egui::Button::new(crate::rtl::widget(ui, egui::RichText::new(ok_label).color(egui::Color32::WHITE)))
-                            .fill(crate::theme::Tokens::get(ui.ctx()).accent_strong),
-                    )
-                    .clicked()
-                    || (!popup_open && ui.input(|i| i.key_pressed(egui::Key::Enter)))
+                if has_ok
+                    && (ui
+                        .add(
+                            egui::Button::new(crate::rtl::widget(ui, egui::RichText::new(ok_label).color(egui::Color32::WHITE)))
+                                .fill(crate::theme::Tokens::get(ui.ctx()).accent_strong),
+                        )
+                        .clicked()
+                        || (!popup_open && ui.input(|i| i.key_pressed(egui::Key::Enter))))
                 {
                     result = Some(true);
                 }
@@ -3009,6 +3047,10 @@ pub fn cancel(app: &mut DesignApp) {
         app.session.cancel_interaction();
     }
     app.cancel_pdf_import();
+    #[cfg(not(target_arch = "wasm32"))]
+    if let Some(d) = d.as_ref().filter(|d| is_ai(&d.id)) {
+        crate::ai::dismissed(app, &d.id);
+    }
     if let Some(d) = d
         && d.id == "preferences"
         && let Some(lang) = d.fields.get("openedLanguage").and_then(Value::as_str)
@@ -3573,6 +3615,12 @@ pub fn confirm(app: &mut DesignApp) -> Result<Value, String> {
         }
         "alert" => Ok(Value::Null),
         crate::effects_dialog::ID => crate::effects_dialog::confirm(app, &d),
+        // Only the dialog's own button sends a request; OK (the control channel's) just closes it.
+        id if is_ai(id) => {
+            #[cfg(not(target_arch = "wasm32"))]
+            crate::ai::dismissed(app, id);
+            Ok(Value::Null)
+        }
         "findChange" => {
             let result = if d.b("objectMode") { Ok(Value::Null) } else { app.run("find.change", find_change_params(&d)) };
             // Confirmation consumes retained bounds before closing, even on an error.
@@ -9926,5 +9974,83 @@ mod tests {
         ctl(&mut app, "ui.dialog.set", json!({"field": "c.digits", "value": "farsi"}));
         assert_eq!(ctl(&mut app, "ui.dialog.confirm", json!({}))["ok"], true);
         assert_eq!(char_style(&app, "Emphasis").unwrap().chars.digits, Some(designcraft_doc::Digits::Farsi));
+    }
+
+    /// The AI dialogs draw their own buttons, have no OK, and close without sending anything. The
+    /// key is a placeholder: no button that sends is clicked.
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn ai_dialogs_have_their_own_buttons_and_close_without_sending() {
+        let mut app = DesignApp::new(designcraft_engine::Session::new(), crate::Services::default());
+        app.run("file.new", json!({})).unwrap();
+        let text = app.run("frame.create", json!({"rect": [36, 36, 300, 200], "content": "text", "text": "Old"})).unwrap()["id"].clone();
+        app.run("selection.set", json!({"ids": [text]})).unwrap();
+        let info = crate::ai::AppInfo {
+            slug: "designcraft-ui-test",
+            name: "DesignCraft",
+            version: "0",
+            app_token: "",
+            dialects: &["chat_completions", "images"],
+            config_dir: None,
+        };
+        let mut ai = crate::ai::Ai::new(info);
+        ai.state.settings.provider = "own".into();
+        ai.state.settings.own_key = "sk-placeholder".into();
+        app.ai = Some(ai);
+        let ctx = dialog_context("en");
+        let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1200.0, 800.0));
+        let painted = |labels: &[(String, egui::Rect, egui::Rect)], text: &str| labels.iter().any(|(t, _, _)| t.trim().starts_with(text));
+
+        // The first-launch dialog: the shared setup flow, closed for good by Close as by Later.
+        app.ui.dialog = Some(Dialog::new(AI_SETUP, json!({})));
+        for _ in 0..2 {
+            dialog_frame(&mut app, &ctx, screen, vec![]);
+        }
+        let labels = dialog_frame(&mut app, &ctx, screen, vec![]);
+        visible_label(&labels, screen, "Use my own key");
+        assert!(!painted(&labels, "OK"));
+        let close = visible_label(&labels, screen, "Close").center();
+        click_dialog(&mut app, &ctx, screen, close);
+        assert!(app.ui.dialog.is_none());
+        assert!(app.ai.as_ref().unwrap().state.settings.setup_done, "dismissing the first-launch dialog counts as Later");
+
+        // Draft Copy: the frame's capacity, Write copy (disabled without a brief), no OK.
+        app.run("app.aiDraftCopy", json!({})).unwrap();
+        for _ in 0..2 {
+            dialog_frame(&mut app, &ctx, screen, vec![]);
+        }
+        let labels = dialog_frame(&mut app, &ctx, screen, vec![]);
+        assert!(painted(&labels, "For the selected text frame. It holds about"), "{labels:?}");
+        visible_label(&labels, screen, "Write copy");
+        assert!(!painted(&labels, "OK"));
+        // Enter types a line; only Close or Escape ends the dialog, and nothing was sent.
+        dialog_frame(
+            &mut app,
+            &ctx,
+            screen,
+            vec![egui::Event::Key { key: egui::Key::Enter, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::NONE }],
+        );
+        assert_eq!(app.ui.dialog.as_ref().map(|d| d.id.as_str()), Some(AI_DRAFT_COPY));
+        dialog_frame(
+            &mut app,
+            &ctx,
+            screen,
+            vec![egui::Event::Key { key: egui::Key::Escape, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::NONE }],
+        );
+        assert!(app.ui.dialog.is_none());
+
+        // Generate Image: where the image goes, the shapes and who bills the request, before any send.
+        app.run("app.aiGenerateImage", json!({})).unwrap();
+        for _ in 0..2 {
+            dialog_frame(&mut app, &ctx, screen, vec![]);
+        }
+        let labels = dialog_frame(&mut app, &ctx, screen, vec![]);
+        visible_label(&labels, screen, "The image goes into a new frame on the page in view.");
+        for expected in ["Square", "Landscape", "Portrait", "Generate image", "Close"] {
+            visible_label(&labels, screen, expected);
+        }
+        assert!(painted(&labels, "Your own key's service"), "{labels:?}");
+        assert_eq!(confirm(&mut app).unwrap(), Value::Null);
+        assert!(app.ai.as_ref().is_some_and(|ai| ai.state.notice.is_none()));
     }
 }

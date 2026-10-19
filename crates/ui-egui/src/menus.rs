@@ -8,9 +8,16 @@ use crate::{DesignApp, ScreenMode};
 /// [`crate::cjk_features`]. The commands still run from scripts, the control channel and MCP.
 pub const CJK_ONLY: &[&str] = &["type.tateChuYoko", "app.rubyDialog", "type.kenten", "type.warichu"];
 
+/// Object › AI: the tools that send a request to publik API or the person's own key. Desktop only:
+/// the web build has no AI menu and its search doesn't list them.
+pub const AI_COMMANDS: &[&str] = &["app.aiDraftCopy", "app.aiGenerateImage"];
+
 /// Whether command `id` has a menu item or Quick Apply entry in the current interface (CJK-only
-/// ones need [`crate::cjk_features`]).
+/// ones need [`crate::cjk_features`]; the AI tools need the desktop app).
 pub fn shown(app: &DesignApp, id: &str) -> bool {
+    if cfg!(target_arch = "wasm32") && AI_COMMANDS.contains(&id) {
+        return false;
+    }
     !CJK_ONLY.contains(&id) || crate::cjk_features(app)
 }
 
@@ -56,6 +63,18 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
     ("app.exportXml", "Export XML…", None, "{path?} — the tagged content"),
     ("app.printBooklet", "Print Booklet…", None, "{path?} — saddle-stitched printer spreads as PDF"),
     ("app.qrCode", "Generate QR Code…", None, "{} — the QR Code dialog (object.qrCode does the work)"),
+    (
+        "app.aiDraftCopy",
+        "Draft Copy…",
+        None,
+        "{} — the Draft Copy dialog (desktop): a brief → copy that fits the selected text frame, through publik API or your own key; only its Write copy button sends, Fill frame runs story.setText",
+    ),
+    (
+        "app.aiGenerateImage",
+        "Generate Image…",
+        None,
+        "{} — the Generate Image dialog (desktop): a prompt → an image in the selected empty or graphic frame, or a new frame on the page in view, through publik API or your own key; only its Generate image button sends, the image is placed with file.place",
+    ),
     ("app.userDictionary", "User Dictionary…", None, "{} — hyphenation exceptions (hyphenation.* commands)"),
     ("app.fittingOptions", "Frame Fitting Options…", None, "{} — the dialog for object.fittingOptions"),
     ("app.menus", "Menus…", None, "{} — show or hide menu items"),
@@ -675,6 +694,10 @@ pub const MENUS: &[(&str, &[&str])] = &[
             "cmd:object.convertShape|Closed Path|{\"to\": \"closedPath\"}",
             "<",
             "ui:app.qrCode",
+            ">AI",
+            "ui:app.aiDraftCopy",
+            "ui:app.aiGenerateImage",
+            "<",
             ">Clipping Path",
             "cmd:object.clippingPathOptions|None|{\"type\": \"none\"}",
             "cmd:object.clippingPath|Alpha Channel|{\"type\": \"alpha\"}",
@@ -1143,6 +1166,8 @@ fn run_ui_inner(app: &mut DesignApp, id: &str, p: &Value) -> Option<Result<Value
             app.ui.dialog = Some(crate::dialogs::Dialog::new("qrCode", json!({})));
             Ok(Value::Null)
         }
+        "app.aiDraftCopy" => open_ai(app, crate::dialogs::AI_DRAFT_COPY),
+        "app.aiGenerateImage" => open_ai(app, crate::dialogs::AI_GENERATE_IMAGE),
         "app.exportText" => export_bytes(app, p, "rtf", "file.exportText"),
         "app.packageDialog" => {
             let name = app.session.active().map(|d| format!("{} Folder", d.doc.title)).unwrap_or_default();
@@ -2271,9 +2296,28 @@ fn parse_entries(entries: &[&str]) -> Vec<Item> {
     out
 }
 
-/// The whole menu tree (InDesign order).
+/// The whole menu tree (InDesign order). The web build has no Object › AI.
 pub fn menu_tree() -> Vec<(&'static str, Vec<Item>)> {
-    MENUS.iter().map(|(m, e)| (*m, parse_entries(e))).collect()
+    let web = cfg!(target_arch = "wasm32");
+    MENUS
+        .iter()
+        .map(|(m, e)| {
+            let items = parse_entries(e).into_iter().filter(|i| !(web && matches!(i, Item::Sub(name, _) if name == "AI"))).collect();
+            (*m, items)
+        })
+        .collect()
+}
+
+/// Object › AI › Draft Copy… and Generate Image…: the tool's dialog (nothing is sent until its
+/// own button is clicked).
+#[cfg(not(target_arch = "wasm32"))]
+fn open_ai(app: &mut DesignApp, dialog: &str) -> Result<Value, String> {
+    crate::ai::open(app, dialog)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn open_ai(_app: &mut DesignApp, _dialog: &str) -> Result<Value, String> {
+    Err("AI tools are available in the desktop app.".into())
 }
 
 /// A row of the macOS application menu (the menu named after the app).
