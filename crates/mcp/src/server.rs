@@ -136,9 +136,8 @@ impl Server {
                     "capabilities": {"tools": {}, "resources": {}},
                     "serverInfo": {"name": "designcraft", "title": "DesignCraft", "version": env!("CARGO_PKG_VERSION"), "websiteUrl": designcraft_engine::links::APP_PAGE},
                     "instructions": format!(
-                        "{INSTRUCTIONS} Backend: {}. Community: {} (Discord), {} (app page), {} (source). The `app.links` command returns these links.",
+                        "{INSTRUCTIONS} Backend: {}. Links: {} (app page), {} (source). The `app.links` command returns these links.",
                         self.backend.describe(),
-                        designcraft_engine::links::DISCORD,
                         designcraft_engine::links::APP_PAGE,
                         designcraft_engine::links::GITHUB
                     ),

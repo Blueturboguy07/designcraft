@@ -2,18 +2,18 @@
 
 use serde_json::{Value, json};
 
-/// The app's slug on getartcraft.com and GitHub.
+/// The app's slug on publikhq.com and GitHub.
 pub const APP: &str = "designcraft";
 /// The ArtCraft community Discord.
 pub const DISCORD: &str = "https://discord.gg/artcraft";
 /// The ArtCraft website.
-pub const WEBSITE: &str = "https://getartcraft.com";
+pub const WEBSITE: &str = "https://publikhq.com/adobe";
 /// DesignCraft's page on the ArtCraft website.
-pub const APP_PAGE: &str = "https://getartcraft.com/apps/designcraft";
+pub const APP_PAGE: &str = "https://publikhq.com/designcraft";
 /// DesignCraft's source repository.
-pub const GITHUB: &str = "https://github.com/storytold/designcraft";
+pub const GITHUB: &str = "https://github.com/Blueturboguy07/designcraft";
 /// Where to report bugs and request features.
-pub const ISSUES: &str = "https://github.com/storytold/designcraft/issues";
+pub const ISSUES: &str = "https://github.com/Blueturboguy07/designcraft/issues";
 
 /// All links as JSON (the `app.links` command).
 pub fn all() -> Value {
