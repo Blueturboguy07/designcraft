@@ -1852,16 +1852,6 @@ const TABLE: &[(&str, [&str; 5])] = &[
         "Interface Color Theme",
         ["Interface Color Theme", "Thème de couleur de l'interface", "Interface Color Theme", "Interface Color Theme", "界面颜色主题"],
     ),
-    (
-        "Join the ArtCraft Discord…",
-        [
-            "Join the ArtCraft Discord…",
-            "Rejoindre le Discord d'ArtCraft…",
-            "Join the ArtCraft Discord…",
-            "Join the ArtCraft Discord…",
-            "加入 ArtCraft Discord…",
-        ],
-    ),
     ("Last Object Below", ["Last Object Below", "Dernier objet en dessous", "Last Object Below", "Last Object Below", "下方最后一个对象"]),
     ("Library Contents", ["Library Contents", "Contenu de la bibliothèque", "Library Contents", "Library Contents", "库内容"]),
     ("Library Items", ["Library Items", "Éléments de la bibliothèque", "Library Items", "Library Items", "库项目"]),
@@ -2826,16 +2816,6 @@ const TABLE: &[(&str, [&str; 5])] = &[
         ],
     ),
     (
-        "discord.gg/artcraft — help, feedback and show-and-tell",
-        [
-            "discord.gg/artcraft — help, feedback and show-and-tell",
-            "discord.gg/artcraft : aide, retours et présentation de vos créations",
-            "discord.gg/artcraft — help, feedback and show-and-tell",
-            "discord.gg/artcraft — help, feedback and show-and-tell",
-            "discord.gg/artcraft — 帮助、反馈和展示",
-        ],
-    ),
-    (
         "⌥-click clears overrides",
         ["⌥-click clears overrides", "⌥-clic efface les remplacements", "⌥-click clears overrides", "⌥-click clears overrides", "⌥-单击清除覆盖"],
     ),
@@ -3744,7 +3724,6 @@ const TABLE: &[(&str, [&str; 5])] = &[
         "Include Stroke Weight",
         ["Include Stroke Weight", "Inclure l'épaisseur du contour", "Include Stroke Weight", "Include Stroke Weight", "包含描边粗细"],
     ),
-    ("Join our Discord", ["Join our Discord", "Rejoindre notre Discord", "Join our Discord", "Join our Discord", "加入我们的 Discord 社区"]),
     ("Keep Violations", ["Keep Violations", "Infractions d'enchaînement", "Keep Violations", "Keep Violations", "保持选项违规"]),
     (
         "Overprint [Black] Swatch at 100%",

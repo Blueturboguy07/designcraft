@@ -4,8 +4,6 @@ use serde_json::{Value, json};
 
 /// The app's slug on publikhq.com and GitHub.
 pub const APP: &str = "designcraft";
-/// The ArtCraft community Discord.
-pub const DISCORD: &str = "https://discord.gg/artcraft";
 /// The ArtCraft website.
 pub const WEBSITE: &str = "https://publikhq.com/adobe";
 /// DesignCraft's page on the ArtCraft website.
@@ -18,7 +16,6 @@ pub const ISSUES: &str = "https://github.com/Blueturboguy07/designcraft/issues";
 /// All links as JSON (the `app.links` command).
 pub fn all() -> Value {
     json!({
-        "discord": DISCORD,
         "website": WEBSITE,
         "appPage": APP_PAGE,
         "github": GITHUB,
@@ -26,10 +23,9 @@ pub fn all() -> Value {
     })
 }
 
-/// A link by key (`discord`, `website`, `appPage`, `github`, `issues`).
+/// A link by key (`website`, `appPage`, `github`, `issues`).
 pub fn get(key: &str) -> Option<&'static str> {
     Some(match key {
-        "discord" => DISCORD,
         "website" => WEBSITE,
         "appPage" => APP_PAGE,
         "github" => GITHUB,
@@ -47,7 +43,7 @@ mod tests {
         assert!(APP_PAGE.ends_with(&format!("/apps/{APP}")));
         assert!(GITHUB.ends_with(&format!("/storytold/{APP}")));
         assert!(ISSUES.starts_with(GITHUB));
-        for k in ["discord", "website", "appPage", "github", "issues"] {
+        for k in ["website", "appPage", "github", "issues"] {
             assert!(get(k).is_some_and(|u| u.starts_with("https://")), "{k}");
             assert_eq!(all()[k], get(k).unwrap());
         }
