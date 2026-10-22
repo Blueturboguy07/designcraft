@@ -139,6 +139,11 @@ enum Shape {
 impl Shape {
     const ALL: [Shape; 3] = [Shape::Square, Shape::Landscape, Shape::Portrait];
 
+    /// The shapes a provider can draw: publik API draws 1024x1024 only; a person's own key has all three.
+    fn offered(publik: bool) -> &'static [Shape] {
+        if publik { &Self::ALL[..1] } else { &Self::ALL[..] }
+    }
+
     fn size(self) -> &'static str {
         match self {
             Shape::Square => "1024x1024",
@@ -594,9 +599,13 @@ fn generate_image(app: &mut DesignApp, ui: &mut Ui, d: &mut Dialog) -> bool {
             .hint_text("A watercolor lighthouse at dawn, soft light, no text"),
     );
     ui.add_space(4.0);
+    let shapes = Shape::offered(provider.is_publik());
+    if !shapes.contains(&ai.shape) {
+        ai.shape = Shape::Square;
+    }
     ui.horizontal(|ui| {
         ui.label("Shape:");
-        for s in Shape::ALL {
+        for s in shapes.iter().copied() {
             ui.add_enabled_ui(!ai.image.busy(), |ui| ui.radio_value(&mut ai.shape, s, s.label()));
         }
     });
@@ -637,7 +646,7 @@ fn generate_image(app: &mut DesignApp, ui: &mut Ui, d: &mut Dialog) -> bool {
         ai.image_target = target;
         ai.unplaced = None;
         let prompt = ai.image.prompt.trim().to_string();
-        let size = ai.shape.size();
+        let size = if provider.is_publik() { Shape::Square.size() } else { ai.shape.size() };
         ai.image.start(spawn(&ctx, move || client::image_generate(&provider, &prompt, size)));
     }
     if place_again && let Some(bytes) = ai.unplaced.take() {
@@ -796,5 +805,17 @@ mod tests {
         dismissed(&mut app, AI_SETUP);
         frame(&mut app);
         assert!(app.ui.dialog.is_none());
+    }
+}
+
+#[cfg(test)]
+mod publik_shape_tests {
+    use super::Shape;
+
+    #[test]
+    fn publik_api_offers_square_only() {
+        assert_eq!(Shape::offered(true).len(), 1);
+        assert_eq!(Shape::offered(true)[0].size(), "1024x1024");
+        assert_eq!(Shape::offered(false).len(), 3);
     }
 }
