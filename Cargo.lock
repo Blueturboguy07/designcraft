@@ -974,6 +974,7 @@ dependencies = [
  "designcraft-pdf",
  "designcraft-render",
  "serde_json",
+ "ureq",
 ]
 
 [[package]]
