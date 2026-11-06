@@ -24,6 +24,9 @@ mod mac_window;
 #[cfg(target_os = "macos")]
 mod native_menu;
 mod profile;
+// publik's usage counts (README: Usage counts). The file is publik's reference client, kept as it is.
+#[rustfmt::skip]
+mod publik_telemetry;
 
 use designcraft_engine::Session;
 use designcraft_ui_egui::{DesignApp, Services};
@@ -356,6 +359,12 @@ fn control_port_from(source: &str, value: Option<String>) -> Option<u16> {
     port
 }
 
+/// The version in publik's usage counts: the release tag without its `v`, for example `0.9.0-publik.4`.
+/// The build number comes from `packaging/PUBLIK_BUILD`, the file the bundle version comes from.
+fn publik_version() -> String {
+    format!("{}-publik.{}", env!("CARGO_PKG_VERSION"), include_str!("../../../packaging/PUBLIK_BUILD").trim())
+}
+
 fn main() -> std::process::ExitCode {
     // First, so every start-up record (and the engine's panic hook, installed with the first
     // Session) is captured; see `logging`.
@@ -391,6 +400,9 @@ fn main() -> std::process::ExitCode {
         log::warn!("portable mode is off: {} cannot be written; settings and recovery use the usual folders", dir.display());
         format!("Portable mode is off: {} cannot be written, so settings are kept in the usual place.", dir.display())
     });
+    // publik's usage counts: `app_opened` now, `active_session` every 30 minutes, on a background
+    // thread. After the early exits above, so `--version` and the self-test send nothing.
+    publik_telemetry::start("designcraft", &publik_version(), None);
     // The log file lives under the settings directory; opened after the arguments, so `--version`
     // leaves no file behind. Records logged until now are written to it first.
     if let (Some(logger), Some(dir)) = (logger, profile::config_dir()) {
