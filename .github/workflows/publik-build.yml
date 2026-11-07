@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: storytold/craft-fonts
-          ref: abb83316d96aa59c1cf64784289e378fe9fa5695
+          ref: b076417b5880bd4154bd22f00695b1d28c6bea83
           path: craft-fonts
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
@@ -47,6 +47,15 @@ jobs:
         with:
           key: publik-build-macos-universal
           cache-on-failure: true
+      - name: publik's tests (AI step, links, Help menu); the job stops here when the port broke them
+        run: |
+          set -euo pipefail
+          # Object > AI, Preferences > AI and the AI dialogs (crates/ui-egui/src/ai.rs, dialogs/tests.rs),
+          # the Help links without Discord (menus/tests.rs), and publik's links (crates/engine/src/links.rs).
+          cargo test --locked -p designcraft-ui-egui --lib -- ai:: \
+            dialogs::tests::ai_dialogs_have_their_own_buttons_and_close_without_sending \
+            menus::tests::help_links_are_enabled_without_a_document
+          cargo test --locked -p designcraft-engine --lib -- --exact links::tests::links_follow_the_app_slug
       - name: Build and package (ad-hoc signature, no notarization)
         run: |
           # The short commit, as publik's earlier builds carry it (<APP>_BUILD_SHA).
@@ -76,7 +85,7 @@ jobs:
             echo "commit=$(git rev-parse HEAD)"
             echo "build_sha=$(git rev-parse --short HEAD)"
             echo "publik_build=$(tr -d '[:space:]' < packaging/PUBLIK_BUILD)"
-            echo "fonts_ref=abb83316d96aa59c1cf64784289e378fe9fa5695"
+            echo "fonts_ref=b076417b5880bd4154bd22f00695b1d28c6bea83"
             echo "runner=$(sw_vers -productName) $(sw_vers -productVersion) $(uname -m)"
             echo "rustc=$(rustc -V)"
             echo "cargo=$(cargo -V)"
