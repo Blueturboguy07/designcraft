@@ -20,6 +20,8 @@ concurrency:
 jobs:
   git-sources:
     name: Git dependencies come from storytold (and publik's craft-publik)
+    # Never at a publik release tag (v*-publik.*): a run there could upload files into publik's release.
+    if: ${{ !contains(github.ref, '-publik') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -61,6 +63,8 @@ jobs:
           PY
 
   release:
+    # Never at a publik release tag (v*-publik.*): a run there could upload files into publik's release.
+    if: ${{ !contains(github.ref, '-publik') }}
     needs: git-sources
     permissions:
       contents: write
