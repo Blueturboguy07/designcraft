@@ -10,7 +10,9 @@ description = "DesignCraft egui frontend (InDesign-style UI); swappable — noth
 workspace = true
 
 [dependencies]
-craft-ui = { workspace = true }
+craft-ui = { workspace = true, features = ["native-windows"] }
+craft-window = { workspace = true }
+craft-keymap = { workspace = true }
 designcraft-geom = { workspace = true }
 designcraft-color = { workspace = true }
 designcraft-doc = { workspace = true }
@@ -19,20 +21,23 @@ designcraft-compose = { workspace = true }
 designcraft-render = { workspace = true }
 designcraft-tools = { workspace = true }
 designcraft-engine = { workspace = true }
+designcraft-textimport = { workspace = true }
+craft-prepress = { workspace = true }
+# The UI draws monochrome icon glyphs from egui's bundled emoji faces (☰, ⚠, 📋); 0.37 moved
+# them behind this feature. They stay bundled copies of OSI/CC0 faces from `epaint_default_fonts`.
+egui = { workspace = true, features = ["monochrome_emoji_fonts"] }
+egui_extras = { workspace = true }
+web-time = { workspace = true }
+# Unicode bidi classes are used only to bypass the label cache for ordinary LTR text.
 unicode-bidi = { workspace = true }
-unicode-bidi-mirroring = { workspace = true }
-unicode-segmentation = { workspace = true }
-egui = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 log = { workspace = true }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-# publik API as the zero-setup AI option (or the person's own key): provisioning, the
-# credential file, the calls, and the setup flow. Desktop only: it talks to the network.
-craft-publik = { git = "https://github.com/Blueturboguy07/craft-publik", rev = "854bdf66e4d97cb19546fdb0ed0e258a20510f0d", features = ["egui"] }
-
 [dev-dependencies]
+# egui 0.37 no longer enables `default_fonts` for library consumers; egui_kittest disables
+# egui's defaults, and package-scoped UI tests do not build the app binary.
+egui = { workspace = true, features = ["default_fonts", "monochrome_emoji_fonts"] }
 tempfile = { workspace = true }
 designcraft-idml = { workspace = true }
 zip = { workspace = true }
@@ -43,3 +48,13 @@ designcraft-fonts = { workspace = true, features = ["testing"] }
 [build-dependencies]
 serde_json = { workspace = true }
 toml = "1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+craft-update = { workspace = true }
+# publik API as the zero-setup AI option (or the person's own key): provisioning, the
+# credential file, the calls, and the setup flow. Desktop only: it talks to the network.
+# Branch egui-0.37 of craft-publik: the same code, with egui ">=0.36, <0.38" (upstream moved to egui 0.37).
+craft-publik = { git = "https://github.com/Blueturboguy07/craft-publik", rev = "7926858db80b68c988d6c325b5d287cbe74fc831", features = ["egui"] }
+# File and message dialogs that never block the frame; the browser build uses its own path.
+craft-dialogs = { workspace = true }
+raw-window-handle = { workspace = true }
