@@ -53,13 +53,16 @@ impl DesignApp {
 }
 
 pub(crate) fn check(app: &mut DesignApp) -> Result<Value, String> {
+    // publik build: Help ▸ Check for Updates opens publik's listing, where publik's latest build is.
+    // craft-update would ask storytold's releases and offer to install a build that is not publik's.
     #[cfg(not(target_arch = "wasm32"))]
     {
-        app.updates_rt.check_requested = true;
+        let url = designcraft_engine::links::APP_PAGE.to_string();
+        app.ui.pending_urls.push(url.clone());
         if let Some(ctx) = &app.updates_rt.repaint {
             ctx.request_repaint();
         }
-        Ok(Value::Null)
+        Ok(serde_json::json!({"url": url}))
     }
     #[cfg(target_arch = "wasm32")]
     {

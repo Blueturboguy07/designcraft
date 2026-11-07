@@ -8,10 +8,13 @@
 
 /// DesignCraft as craft-update knows it, with its 128 px icon and accent colour: the update
 /// prompt shows both, and an AppImage's menu entry gets the icon.
+/// publik build: the app never starts a check (see `updates_ui::check`), and the repository is
+/// publik's fork, so craft-update could never offer storytold's build in its place.
 #[cfg(not(target_arch = "wasm32"))]
 pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
     icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.designcraft.png")),
     accent: Some([0x7b, 0xb5, 0x1c]),
+    repo: "Blueturboguy07/designcraft",
     ..craft_update::suite::DESIGNCRAFT
 };
 
