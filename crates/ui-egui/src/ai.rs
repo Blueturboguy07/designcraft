@@ -210,9 +210,11 @@ pub fn frame(app: &mut DesignApp) {
     }
     let image = ai.image.poll(&mut ai.state).map(|r| (r.bytes, ai.image_target.take()));
     ai.frames = ai.frames.saturating_add(1);
-    // The first launch asks once the window is up (a few frames in). "Later" ends that for good.
-    if !ai.first_run_checked && ai.frames > 3 {
+    // The first launch asks once the publik gate passed and the window is up (a few frames in):
+    // after "Use my own key" at the gate, the own-key form. "Later" ends that for good.
+    if !ai.first_run_checked && ai.frames > 3 && craft_publik::gate::passed() {
         ai.first_run_checked = true;
+        ai.state.reload_credential(); // the gate wrote it after this state was created
         ai.setup_due = ai.state.wants_first_run() || ai.state.owes_first_card();
     }
     let open_setup = ai.setup_due && app.ui.dialog.is_none();
@@ -290,7 +292,7 @@ fn not_ready(app: &mut DesignApp, ui: &mut Ui, d: &mut Dialog) -> bool {
         off(ui);
         return false;
     };
-    ui.label("This tool needs AI. Set it up first: publik API (no key to paste) or your own key.");
+    ui.label("This tool needs AI. Set it up first: connect your publik plan (no key to paste) or use your own key.");
     ui.add_space(6.0);
     if ui.button("Set up AI…").clicked() {
         ai.state.begin();

@@ -4,7 +4,7 @@ members = ["crates/*", "apps/*", "xtask"]
 default-members = ["crates/*", "apps/designcraft", "apps/designcraft-cli", "xtask"]
 
 [workspace.package]
-version = "0.18.0"
+version = "0.18.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.95"
@@ -108,6 +108,10 @@ web-time = "1"
 rfd = "0.17"
 # Native file and message dialogs that never block the event loop (craft-libs).
 craft-dialogs = { git = "https://github.com/storytold/craft-libs", rev = "1a11a4897865f7410c40d25ca6e452ce399a1a2c" }
+# The publik module shared by the Craft apps (publikhq.com/sdk/publik.rs.md): Sign in with publik
+# (the gate), usage counting, and publik API or the person's own key. One pin for the whole
+# workspace; branch signin-gate. The crate accepts egui 0.36 and 0.37.
+craft-publik = { git = "https://github.com/Blueturboguy07/craft-publik", rev = "a342903b04a60063837814e0ac7cbb2ccba79614", features = ["egui"] }
 raw-window-handle = "0.6"
 arboard = { version = "3.6", default-features = false }
 

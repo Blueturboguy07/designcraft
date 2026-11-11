@@ -51,10 +51,10 @@ toml = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 craft-update = { workspace = true }
-# publik API as the zero-setup AI option (or the person's own key): provisioning, the
-# credential file, the calls, and the setup flow. Desktop only: it talks to the network.
-# Branch egui-0.37 of craft-publik: the same code, with egui ">=0.36, <0.38" (upstream moved to egui 0.37).
-craft-publik = { git = "https://github.com/Blueturboguy07/craft-publik", rev = "7926858db80b68c988d6c325b5d287cbe74fc831", features = ["egui"] }
+# The publik module (pinned in the root Cargo.toml): publik API as the zero-setup AI option (or
+# the person's own key), the credential file, the calls, and the setup flow. Desktop only: it
+# talks to the network.
+craft-publik = { workspace = true }
 # File and message dialogs that never block the frame; the browser build uses its own path.
 craft-dialogs = { workspace = true }
 raw-window-handle = { workspace = true }

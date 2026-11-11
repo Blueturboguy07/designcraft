@@ -24,9 +24,9 @@ mod native_menu;
 #[cfg(target_os = "macos")]
 mod pointer;
 mod profile;
-// publik's usage counts (README: Usage counts). The file is publik's reference client, kept as it is.
-#[rustfmt::skip]
-mod publik_telemetry;
+// Sign in with publik, usage counting and the AI pay choice: this build's publik facts and the
+// gate every publik app opens with.
+mod publik;
 mod window_frame;
 
 use designcraft_engine::Session;
@@ -34,6 +34,8 @@ use designcraft_ui_egui::{DesignApp, Services};
 
 struct App {
     app: DesignApp,
+    /// Sign in with publik: drawn before anything of the app until it passes.
+    gate: craft_publik::ui::Gate,
     #[cfg(target_os = "macos")]
     menu: Option<native_menu::NativeMenu>,
     /// The window's start: the adapter and backend chosen for it; see `gpu`.
@@ -94,7 +96,12 @@ impl eframe::App for App {
                 self.startup.opening(apple_events::poll(&self.apple_events, &mut self.app, ui.ctx()));
             }
         }
-        self.app.ui(ui);
+        // Sign in with publik comes first: the gate draws itself until the person is signed in
+        // (and, the first time, has chosen how the app pays for AI). Nothing of the app shows
+        // before; the start-up counters above still see every frame, and `leave` still pairs `enter`.
+        if self.gate.ui(ui) {
+            self.app.ui(ui);
+        }
         self.startup.leave();
         #[cfg(target_os = "macos")]
         if self.app.take_ime_discard() {
@@ -150,19 +157,6 @@ fn preserve_documents_on_exit(app: &mut DesignApp) -> Result<(), String> {
 /// `DESIGNCRAFT_NO_PREFS`: read and write nothing in the settings directory (tests, demos).
 fn no_prefs() -> bool {
     std::env::var_os("DESIGNCRAFT_NO_PREFS").is_some()
-}
-
-/// What publik needs to know about this build. The app token is public by design (it can only
-/// mint capped keys attributed to DesignCraft) and lives at the repo root so source builds carry it.
-fn app_info() -> designcraft_ui_egui::ai::AppInfo {
-    designcraft_ui_egui::ai::AppInfo {
-        slug: "designcraft",
-        name: "DesignCraft",
-        version: env!("CARGO_PKG_VERSION"),
-        app_token: include_str!("../../../publik-app-token.txt"),
-        dialects: &["chat_completions", "images"],
-        config_dir: profile::config_dir(),
-    }
 }
 
 fn prefs_path() -> Option<std::path::PathBuf> {
@@ -273,12 +267,6 @@ fn control_port_from(source: &str, value: Option<String>) -> Option<u16> {
     port
 }
 
-/// The version in publik's usage counts: the release tag without its `v`, for example `0.9.0-publik.4`.
-/// The build number comes from `packaging/PUBLIK_BUILD`, the file the bundle version comes from.
-fn publik_version() -> String {
-    format!("{}-publik.{}", env!("CARGO_PKG_VERSION"), include_str!("../../../packaging/PUBLIK_BUILD").trim())
-}
-
 fn main() -> std::process::ExitCode {
     // Windows: the update helper is a copy of this program started with `--finish-update`.
     #[cfg(windows)]
@@ -310,7 +298,7 @@ fn main() -> std::process::ExitCode {
     // Builder check (publikhq.com/skills/setup.md): the built app provisions publik API for real
     // and prints one line. The builder who runs it is the consent.
     if std::env::var_os("PUBLIK_SELF_TEST").is_some() {
-        println!("{}", designcraft_ui_egui::ai::self_test(&app_info()));
+        println!("{}", craft_publik::self_test(&publik::app_info()));
         return std::process::ExitCode::SUCCESS;
     }
     // A portable.txt whose DesignCraftData folder cannot be written: the platform folders are used
@@ -319,9 +307,9 @@ fn main() -> std::process::ExitCode {
         log::warn!("portable mode is off: {} cannot be written; settings and recovery use the usual folders", dir.display());
         format!("Portable mode is off: {} cannot be written, so settings are kept in the usual place.", dir.display())
     });
-    // publik's usage counts: `app_opened` now, `active_session` every 30 minutes, on a background
-    // thread. After the early exits above, so `--version` and the self-test send nothing.
-    publik_telemetry::start("designcraft", &publik_version(), None);
+    // publik's usage counts (`app_opened` now, `active_session` every 30 minutes) start once the
+    // gate passed (`publik::app_info`, `craft_publik::ui::Gate`), so `--version` and the self-test
+    // send nothing.
     // The log file lives under the settings directory; opened after the arguments, so `--version`
     // leaves no file behind. Records logged until now are written to it first.
     if let (Some(logger), Some(dir)) = (logger, profile::config_dir()) {
@@ -462,7 +450,7 @@ fn main() -> std::process::ExitCode {
                 // AI through publik API or the person's own key; the first launch asks once. Not
                 // in runs without preferences (tests, demos), where no dialog may appear unasked.
                 if !no_prefs() {
-                    app.ai = Some(designcraft_ui_egui::ai::Ai::new(app_info()));
+                    app.ai = Some(designcraft_ui_egui::ai::Ai::new(publik::app_info()));
                 }
                 // After `load_prefs`, which replaces the UI state and with it the status line.
                 if let Some(note) = portable_note {
@@ -489,6 +477,8 @@ fn main() -> std::process::ExitCode {
                 created.ready();
                 Ok(Box::new(App {
                     app,
+                    // Sign in with publik: provisioning starts now, on a worker thread; `ui` draws it.
+                    gate: craft_publik::ui::Gate::new(publik::app_info()),
                     #[cfg(target_os = "macos")]
                     menu: None,
                     startup: created,

@@ -5053,6 +5053,8 @@ fn ai_dialogs_have_their_own_buttons_and_close_without_sending() {
         name: "DesignCraft",
         version: "0",
         app_token: "",
+        uses_ai: true,
+        endpoints: craft_publik::Endpoints::DEFAULT,
         dialects: &["chat_completions", "images"],
         config_dir: None,
     };

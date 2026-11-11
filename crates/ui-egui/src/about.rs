@@ -183,7 +183,9 @@ pub fn show(app: &mut DesignApp, ctx: &egui::Context) {
             ui.add_space(12.0);
             ui.label(crate::rtl::widget(
                 ui,
-                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Open source. Anonymous usage counts only (DO_NOT_TRACK=1 turns them off).")).size(11.0).color(t.text_dim),
+                egui::RichText::new(crate::i18n::tr(&app.ui.language, "Open source. Anonymous usage counts only (DO_NOT_TRACK=1 turns them off)."))
+                    .size(11.0)
+                    .color(t.text_dim),
             ));
             ui.add_space(8.0);
             if ui.button(crate::rtl::widget(ui, crate::i18n::tr(&app.ui.language, "  Close  "))).clicked() {

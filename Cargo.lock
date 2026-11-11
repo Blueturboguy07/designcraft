@@ -1116,8 +1116,8 @@ dependencies = [
 
 [[package]]
 name = "craft-publik"
-version = "0.1.0"
-source = "git+https://github.com/Blueturboguy07/craft-publik?rev=7926858db80b68c988d6c325b5d287cbe74fc831#7926858db80b68c988d6c325b5d287cbe74fc831"
+version = "0.2.0"
+source = "git+https://github.com/Blueturboguy07/craft-publik?rev=a342903b04a60063837814e0ac7cbb2ccba79614#a342903b04a60063837814e0ac7cbb2ccba79614"
 dependencies = [
  "egui",
  "serde",
@@ -1316,9 +1316,10 @@ dependencies = [
 
 [[package]]
 name = "designcraft"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "arboard",
+ "craft-publik",
  "craft-update",
  "craft-window",
  "designcraft-engine",
@@ -1334,7 +1335,6 @@ dependencies = [
  "rfd",
  "serde",
  "serde_json",
- "ureq 2.12.1",
  "winit",
  "winresource",
  "winsafe",
@@ -1342,7 +1342,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-cli"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "designcraft-color",
  "designcraft-compose",
@@ -1360,7 +1360,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-color"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "craft-cms",
  "kurbo",
@@ -1372,7 +1372,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-compose"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "designcraft-color",
  "designcraft-doc",
@@ -1392,7 +1392,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-doc"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "chrono",
  "designcraft-color",
@@ -1405,7 +1405,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-engine"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "caseless",
  "craft-atomic",
@@ -1445,7 +1445,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-epub"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "chrono",
  "designcraft-color",
@@ -1455,7 +1455,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-fonts"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "core-text",
  "harfrust 0.13.3",
@@ -1468,7 +1468,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-format"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "designcraft-doc",
  "designcraft-images",
@@ -1480,7 +1480,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-geom"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "flo_curves",
  "kurbo",
@@ -1493,7 +1493,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-idml"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "designcraft-color",
  "designcraft-compose",
@@ -1508,7 +1508,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-images"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "craft-cms",
  "designcraft-color",
@@ -1526,7 +1526,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-mcp"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "designcraft-engine",
  "designcraft-geom",
@@ -1539,7 +1539,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-pdf"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "chrono",
  "craft-cms",
@@ -1565,7 +1565,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-pptx"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "chrono",
  "designcraft-color",
@@ -1583,7 +1583,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-render"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "craft-pdf",
  "designcraft-color",
@@ -1602,7 +1602,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-textimport"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "designcraft-doc",
  "quick-xml 0.41.0",
@@ -1611,7 +1611,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-tools"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "designcraft-color",
  "designcraft-compose",
@@ -1623,7 +1623,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-ui-egui"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "craft-dialogs",
  "craft-keymap",
@@ -1658,7 +1658,7 @@ dependencies = [
 
 [[package]]
 name = "designcraft-web"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "designcraft-engine",
  "designcraft-format",
@@ -7726,7 +7726,7 @@ checksum = "9440ea3e5aeabb0ac63af70daf835274065238cdd0cec83418f417eae38bacee"
 
 [[package]]
 name = "xtask"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "serde_json",
 ]
